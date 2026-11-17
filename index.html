@@ -1,0 +1,467 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#20232c">
+  <title>Exploding Microwaves — Idle Clicker</title>
+  <style>
+    :root {
+      color-scheme: light;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: #f8f3e8;
+      background: #20232c;
+      font-synthesis: none;
+      text-rendering: optimizeLegibility;
+      --ink: #242833;
+      --muted: #a5a9b4;
+      --panel: #2b2f3a;
+      --line: #454a57;
+      --yellow: #ffd166;
+      --orange: #f45b35;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      min-width: 320px;
+      min-height: 100vh;
+      margin: 0;
+      padding: 32px 20px;
+      background:
+        radial-gradient(ellipse at 12% 8%, #5e4425 0, transparent 34%),
+        radial-gradient(ellipse at 90% 92%, #632e35 0, transparent 30%),
+        #20232c;
+    }
+
+    button { font: inherit; }
+
+    .game {
+      width: min(100%, 980px);
+      margin: 0 auto;
+    }
+
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .brand-icon {
+      display: grid;
+      width: 48px;
+      height: 48px;
+      place-items: center;
+      border-radius: 16px;
+      background: linear-gradient(145deg, var(--orange), #c8323e);
+      font-size: 25px;
+      box-shadow: 0 6px 16px #0000003d;
+    }
+
+    h1, h2, p { margin: 0; }
+    h1 { font-size: clamp(20px, 4vw, 26px); letter-spacing: -0.04em; }
+    .subtitle { margin-top: 3px; color: var(--muted); font-size: 13px; }
+
+    .save-state {
+      color: var(--muted);
+      font-size: 12px;
+      white-space: nowrap;
+    }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+
+    .stat, .panel {
+      border: 1px solid #ffffff12;
+      border-radius: 20px;
+      background: #2b2f3aeF;
+      box-shadow: 0 8px 26px #00000020;
+    }
+
+    .stat { padding: 17px 20px; }
+    .stat-label { color: var(--muted); font-size: 12px; }
+    .stat-value { margin-top: 5px; font-size: clamp(19px, 4vw, 26px); font-weight: 750; letter-spacing: -0.04em; }
+    .stat-value small { color: var(--muted); font-size: 12px; font-weight: 500; letter-spacing: 0; }
+
+    .layout {
+      display: grid;
+      grid-template-columns: 1.08fr 0.92fr;
+      gap: 16px;
+    }
+
+    .panel { padding: 24px; }
+    .play-panel {
+      display: flex;
+      min-height: 420px;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      position: relative;
+      text-align: center;
+    }
+
+    .play-panel::before, .play-panel::after {
+      position: absolute;
+      z-index: 0;
+      width: 190px;
+      height: 190px;
+      border: 1px solid #ffd16624;
+      border-radius: 50%;
+      content: "";
+    }
+
+    .play-panel::before { width: 300px; height: 300px; }
+    .play-panel::after { width: 390px; height: 390px; }
+    .play-panel > * { z-index: 1; }
+
+    .scrap-count { margin-bottom: 4px; font-size: clamp(42px, 8vw, 60px); font-weight: 800; letter-spacing: -0.07em; }
+    .scrap-caption { margin-bottom: 22px; color: var(--muted); font-size: 14px; }
+
+    .microwave-button {
+      display: grid;
+      width: 200px;
+      height: 200px;
+      place-items: center;
+      position: relative;
+      border: 0;
+      border-radius: 50%;
+      background: radial-gradient(circle at 35% 28%, #ffe9a3, var(--yellow) 48%, #f6a83c 100%);
+      color: var(--ink);
+      cursor: pointer;
+      box-shadow: 0 12px 0 #bd6b2b, 0 20px 34px #00000035, inset 0 4px 10px #ffffff70;
+      transition: transform 90ms ease, box-shadow 90ms ease, filter 150ms ease;
+      user-select: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .microwave-button:hover { filter: brightness(1.05); }
+    .microwave-button:active {
+      transform: translateY(8px) scale(0.98);
+      box-shadow: 0 4px 0 #bd6b2b, 0 10px 20px #00000030, inset 0 4px 10px #ffffff70;
+    }
+    .microwave-button:focus-visible, .upgrade-button:focus-visible { outline: 3px solid var(--yellow); outline-offset: 4px; }
+
+    .microwave {
+      display: flex;
+      width: 126px;
+      height: 88px;
+      align-items: center;
+      gap: 9px;
+      padding: 10px;
+      border: 4px solid #929aa6;
+      border-radius: 15px;
+      position: relative;
+      background: linear-gradient(145deg, #e1e5e9, #9ea7b2);
+      box-shadow: 0 9px 0 #68727d, inset 0 3px 4px #ffffffb8;
+      transform: rotate(-5deg);
+      transition: transform 120ms ease;
+    }
+
+    .microwave::before, .microwave::after {
+      content: "";
+      position: absolute;
+      bottom: -10px;
+      width: 13px;
+      height: 7px;
+      border-radius: 0 0 4px 4px;
+      background: #626c78;
+    }
+    .microwave::before { left: 12px; }
+    .microwave::after { right: 12px; }
+    .microwave-window {
+      display: grid;
+      width: 77px;
+      height: 58px;
+      place-items: center;
+      border: 4px solid #717a87;
+      border-radius: 8px;
+      background: radial-gradient(circle, #f45b35 0, #9c3d50 28%, #272c39 70%);
+      box-shadow: inset 0 0 12px #111722;
+      font-size: 28px;
+    }
+    .microwave-controls { display: grid; flex: 1; gap: 5px; justify-items: center; }
+    .microwave-controls i { width: 15px; height: 8px; border: 2px solid #727b86; border-radius: 3px; background: #d4d8dc; }
+    .microwave-controls i:last-child { width: 20px; height: 17px; border-radius: 50%; }
+    .microwave-button.is-bursting .microwave { animation: microwave-rattle 360ms ease-in-out; }
+    .microwave-button.is-bursting::before, .microwave-button.is-bursting::after {
+      content: "✦";
+      position: absolute;
+      color: #ef4d42;
+      font-size: 40px;
+      animation: burst-pop 360ms ease-out forwards;
+    }
+    .microwave-button.is-bursting::before { top: 4px; left: 8px; }
+    .microwave-button.is-bursting::after { right: 4px; bottom: 12px; color: #fff4bd; font-size: 30px; }
+    @keyframes microwave-rattle {
+      0%, 100% { transform: rotate(0) scale(1); }
+      25% { transform: rotate(-5deg) scale(1.08); }
+      55% { transform: rotate(5deg) scale(1.04); }
+      80% { transform: rotate(-3deg) scale(1.02); }
+    }
+    @keyframes burst-pop {
+      from { opacity: 1; transform: scale(0.4) rotate(0); }
+      to { opacity: 0; transform: scale(1.6) rotate(35deg); }
+    }
+    .click-hint { margin-top: 25px; color: var(--muted); font-size: 13px; }
+
+    .shop-heading { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 16px; }
+    h2 { font-size: 18px; letter-spacing: -0.03em; }
+    .shop-heading span { color: var(--muted); font-size: 12px; }
+    .upgrade-list { display: grid; gap: 10px; }
+
+    .upgrade {
+      display: grid;
+      grid-template-columns: 44px 1fr auto;
+      align-items: center;
+      gap: 12px;
+      padding: 13px;
+      border: 1px solid var(--line);
+      border-radius: 15px;
+      background: #242833;
+    }
+
+    .upgrade-icon {
+      display: grid;
+      width: 44px;
+      height: 44px;
+      place-items: center;
+      border-radius: 13px;
+      background: #393440;
+      font-size: 22px;
+    }
+
+    .upgrade-name { font-size: 13px; font-weight: 700; }
+    .upgrade-description { margin-top: 3px; color: var(--muted); font-size: 11px; }
+
+    .upgrade-button {
+      min-width: 82px;
+      padding: 9px 10px;
+      border: 0;
+      border-radius: 11px;
+      background: var(--orange);
+      color: white;
+      cursor: pointer;
+      font-size: 12px;
+      font-weight: 700;
+      transition: opacity 120ms ease, transform 120ms ease;
+    }
+
+    .upgrade-button:hover:not(:disabled) { transform: translateY(-1px); }
+    .upgrade-button:disabled { background: #555a65; color: #b7bac2; cursor: not-allowed; }
+    .upgrade-button small { display: block; margin-top: 2px; font-size: 10px; font-weight: 500; opacity: 0.8; }
+    .empty-note { margin-top: 15px; color: var(--muted); font-size: 12px; line-height: 1.5; }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+    }
+
+    @media (max-width: 700px) {
+      body { padding: 22px 14px; }
+      .layout { grid-template-columns: 1fr; }
+      .play-panel { min-height: 360px; }
+      .microwave-button { width: 170px; height: 170px; }
+      .microwave { transform: scale(0.9) rotate(-5deg); }
+    }
+
+    @media (max-width: 440px) {
+      .stats { gap: 7px; }
+      .stat { padding: 13px 10px; }
+      .stat-label { font-size: 10px; }
+      .stat-value { font-size: 19px; }
+      .panel { padding: 18px; }
+      .save-state { font-size: 10px; }
+    }
+  </style>
+</head>
+<body>
+  <main class="game">
+    <header>
+      <div class="brand">
+        <div class="brand-icon" aria-hidden="true">💥</div>
+        <div>
+          <h1>Exploding Microwaves</h1>
+          <p class="subtitle">One click closer to a kitchen-sized kaboom.</p>
+        </div>
+      </div>
+      <p class="save-state" id="save-state" role="status">Autosaved</p>
+    </header>
+
+    <section class="stats" aria-label="Game stats">
+      <article class="stat">
+        <p class="stat-label">Scrap</p>
+        <p class="stat-value" id="scrap-stat">0</p>
+      </article>
+      <article class="stat">
+        <p class="stat-label">Per smash</p>
+        <p class="stat-value" id="click-stat">1 <small>scrap</small></p>
+      </article>
+      <article class="stat">
+        <p class="stat-label">Auto-salvage</p>
+        <p class="stat-value" id="rate-stat">0 <small>/ sec</small></p>
+      </article>
+    </section>
+
+    <div class="layout">
+      <section class="panel play-panel" aria-label="Smash the microwave">
+        <p class="scrap-count" id="scrap-count" aria-live="polite">0</p>
+        <p class="scrap-caption">scrap collected</p>
+        <button class="microwave-button" id="smash-button" type="button" aria-label="Smash the microwave and collect scrap">
+          <span class="microwave" aria-hidden="true">
+            <span class="microwave-window">⚡</span>
+            <span class="microwave-controls"><i></i><i></i><i></i></span>
+          </span>
+        </button>
+        <p class="click-hint">Click the microwave to make it go kaboom!</p>
+      </section>
+
+      <section class="panel" aria-labelledby="shop-title">
+        <div class="shop-heading">
+          <h2 id="shop-title">Upgrade Shop</h2>
+          <span>Spend your scrap</span>
+        </div>
+        <div class="upgrade-list">
+          <article class="upgrade">
+            <div class="upgrade-icon" aria-hidden="true">🔨</div>
+            <div>
+              <p class="upgrade-name">Reinforced Mallet</p>
+              <p class="upgrade-description">+1 scrap per smash · Level <span id="click-level">0</span></p>
+            </div>
+            <button class="upgrade-button" id="click-upgrade" type="button">
+              <span id="click-cost">15</span><small>scrap</small>
+            </button>
+          </article>
+          <article class="upgrade">
+            <div class="upgrade-icon" aria-hidden="true">🤖</div>
+            <div>
+              <p class="upgrade-name">Tiny Salvage Bots</p>
+              <p class="upgrade-description">+1 scrap per sec · Level <span id="bot-level">0</span></p>
+            </div>
+            <button class="upgrade-button" id="bot-upgrade" type="button">
+              <span id="bot-cost">25</span><small>scrap</small>
+            </button>
+          </article>
+        </div>
+        <p class="empty-note">Your salvage bots keep working while you plan your next big kaboom!</p>
+      </section>
+    </div>
+  </main>
+
+  <script>
+    const SAVE_KEY = "exploding-microwaves-save-v1";
+    const state = {
+      scrap: 0,
+      clickLevel: 0,
+      botLevel: 0,
+      clickCost: 15,
+      botCost: 25
+    };
+
+    const elements = {
+      scrapCount: document.getElementById("scrap-count"),
+      scrapStat: document.getElementById("scrap-stat"),
+      clickStat: document.getElementById("click-stat"),
+      rateStat: document.getElementById("rate-stat"),
+      clickLevel: document.getElementById("click-level"),
+      botLevel: document.getElementById("bot-level"),
+      clickCost: document.getElementById("click-cost"),
+      botCost: document.getElementById("bot-cost"),
+      clickUpgrade: document.getElementById("click-upgrade"),
+      botUpgrade: document.getElementById("bot-upgrade"),
+      saveState: document.getElementById("save-state"),
+      smashButton: document.getElementById("smash-button")
+    };
+
+    function formatNumber(value) {
+      return new Intl.NumberFormat("en-US", { maximumFractionDigits: 1 }).format(value);
+    }
+
+    function render() {
+      const clickPower = state.clickLevel + 1;
+      elements.scrapCount.textContent = formatNumber(state.scrap);
+      elements.scrapStat.textContent = formatNumber(state.scrap);
+      elements.clickStat.innerHTML = `${formatNumber(clickPower)} <small>scrap</small>`;
+      elements.rateStat.innerHTML = `${formatNumber(state.botLevel)} <small>/ sec</small>`;
+      elements.clickLevel.textContent = state.clickLevel;
+      elements.botLevel.textContent = state.botLevel;
+      elements.clickCost.textContent = formatNumber(state.clickCost);
+      elements.botCost.textContent = formatNumber(state.botCost);
+      elements.clickUpgrade.disabled = state.scrap < state.clickCost;
+      elements.botUpgrade.disabled = state.scrap < state.botCost;
+    }
+
+    function save() {
+      try {
+        localStorage.setItem(SAVE_KEY, JSON.stringify(state));
+        elements.saveState.textContent = "Autosaved";
+      } catch (error) {
+        elements.saveState.textContent = "Saving unavailable";
+        console.error("Exploding Microwaves could not save progress.", error);
+      }
+    }
+
+    function load() {
+      try {
+        const saved = localStorage.getItem(SAVE_KEY);
+        if (!saved) return;
+        const data = JSON.parse(saved);
+        for (const key of Object.keys(state)) {
+          if (Number.isFinite(data[key]) && data[key] >= 0) state[key] = data[key];
+        }
+      } catch (error) {
+        elements.saveState.textContent = "Previous save could not be loaded";
+        console.error("Exploding Microwaves could not load saved progress.", error);
+      }
+    }
+
+    elements.smashButton.addEventListener("click", () => {
+      state.scrap += state.clickLevel + 1;
+      elements.smashButton.classList.remove("is-bursting");
+      void elements.smashButton.offsetWidth;
+      elements.smashButton.classList.add("is-bursting");
+      window.setTimeout(() => elements.smashButton.classList.remove("is-bursting"), 360);
+      render();
+      save();
+    });
+
+    elements.clickUpgrade.addEventListener("click", () => {
+      if (state.scrap < state.clickCost) return;
+      state.scrap -= state.clickCost;
+      state.clickLevel += 1;
+      state.clickCost = Math.ceil(state.clickCost * 1.6);
+      render();
+      save();
+    });
+
+    elements.botUpgrade.addEventListener("click", () => {
+      if (state.scrap < state.botCost) return;
+      state.scrap -= state.botCost;
+      state.botLevel += 1;
+      state.botCost = Math.ceil(state.botCost * 1.5);
+      render();
+      save();
+    });
+
+    load();
+    render();
+    window.setInterval(() => {
+      if (state.botLevel === 0) return;
+      state.scrap += state.botLevel;
+      render();
+      save();
+    }, 1000);
+  </script>
+</body>
+</html>
